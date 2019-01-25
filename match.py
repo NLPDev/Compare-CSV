@@ -41,7 +41,29 @@ def LCSubStr(X, Y, m, n):
 
     return result
 
-reader1 = csv.reader(open('df1.csv', 'r'), delimiter=',', quotechar='"')
+def cmp_f1(df01, df02):
+    l01=len(df01)
+    l02=len(df02)
+
+    ll=min(l01, l02)
+
+    lc=LCSubStr(df01, df02, l01, l02)
+
+    if ll==lc:
+        return 1
+
+    return 0
+
+
+def cmp(dfl01, dfl02):
+    ll01=len(dfl01)
+    ll02=len(dfl02)
+
+
+
+
+
+reader1 = csv.reader(open('df3.csv', 'r'), delimiter=',', quotechar='"')
 wb1=Workbook()
 ws1=wb1.active
 
@@ -80,6 +102,7 @@ for rr1 in reader1:
 ele[2]=no+1
 name01[ln]=ele
 name01.sort()
+ln01=ln+1
 
 wb1.save("ex01.xlsx")
 
@@ -127,6 +150,110 @@ for rr2 in reader2:
 ele[2]=no+1
 name02[ln]=ele
 name02.sort()
-
+ln02=ln
 
 wb2.save("ex02.xlsx")
+
+rn01=0
+rn02=0
+
+with open("result.csv", "w", newline="") as f:
+    writer=csv.writer(f)
+    writer.writerow(["F1_ID", "Match_ID", "Exact_ID", "Close_ID", "No_Match_DF1", "No_Match_DF2", "Name_Match", "Dataes_Match", "F2_Match"])
+
+    loc01="ex01.xlsx"
+    rs01=xlrd.open_workbook(loc01)
+    sheet01=rs01.sheet_by_index(0)
+
+
+    loc02="ex02.xlsx"
+    rs02=xlrd.open_workbook(loc02)
+    sheet02=rs02.sheet_by_index(0)
+
+
+    while rn01<ln01 and rn02<ln02:
+        cmpN=cmp_f1(name01[rn01][0], name02[rn02][0])
+        if cmpN==1:
+            list1=[]
+            list2=[]
+
+            ad01=[]
+            ad02=[]
+
+            for i in range(name01[rn01][1], name01[rn01][2]):
+
+                ad01=[]
+                for j in range(7):
+                    ad01.append(sheet01.cell_value(i, j+1))
+
+                list1.append(ad01)
+
+            for i in range(name02[rn02][1], name02[rn02][2]):
+
+                ad02=[]
+                for j in range(7):
+                    ad02.append(sheet02.cell_value(i, j+1))
+
+                list2.append(ad02)
+
+            F1_ID=list1[0][5]
+            Match_ID=list2[0][5]
+            len_list1=len(list1)
+            len_list2=len(list2)
+
+            Exact_Match=""
+            Close_Match=""
+            No_Match_DF2=""
+            No_Match_DF1 = ""
+            F01=""
+            F02=""
+
+            match1=[]
+            for j in range(len_list1):
+                match1.append(0)
+
+            for i in range(len_list2):
+                no_match=1
+                for j in range(len_list1):
+                    if list2[i][0]==list1[j][0]:
+                        no_match=0
+                        match1[j]=1
+                        if list2[i][1]==list1[j][1]:
+                            Exact_Match=Exact_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]
+                            F01=F01+" "+list1[j][4]
+                            F02=F02+" "+list2[i][4]
+                            break
+                        else:
+                            Close_Match=Close_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]
+                            F01 = F01 + " " + list1[j][4]
+                            F02 = F02 + " " + list2[i][4]
+                            break
+
+                if no_match==1:
+                    No_Match_DF2=No_Match_DF2+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]
+
+            for j in range(len_list1):
+                if match1[j]==0:
+                    No_Match_DF1=No_Match_DF1+" "+list1[j][4]+" "+list1[j][1]+" "+list1[j][0]
+
+            Name_Match=fuzz.token_set_ratio(list1[0][3], list2[0][3])/100
+            F2_Match=fuzz.token_set_ratio(F01, F02)/100
+
+            writer.writerow([F1_ID, Match_ID, Exact_Match, Close_Match, No_Match_DF1, No_Match_DF2, Name_Match, 1, F2_Match])
+
+
+            rn01=rn01+1
+            rn02=rn02+1
+
+        else:
+            if name01[rn01][0]<name02[rn02][0]:
+                rn01=rn01+1
+            else:
+                rn02=rn02+1
+
+
+
+
+
+
+
