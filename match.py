@@ -19,7 +19,7 @@ from openpyxl import Workbook
 
 
 
-def LCSubStr(X, Y, m, n):
+def LCSubStr(X, Y, m, n): #calculate longest common string
 
     LCSuff = [[0 for k in range(n + 1)] for l in range(m + 1)]
 
@@ -41,7 +41,7 @@ def LCSubStr(X, Y, m, n):
 
     return result
 
-def cmp_f1(df01, df02):
+def cmp_f1(df01, df02): #calculate match
     l01=len(df01)
     l02=len(df02)
 
@@ -55,15 +55,8 @@ def cmp_f1(df01, df02):
     return 0
 
 
-def cmp(dfl01, dfl02):
-    ll01=len(dfl01)
-    ll02=len(dfl02)
 
-
-
-
-
-reader1 = csv.reader(open('df3.csv', 'r'), delimiter=',', quotechar='"')
+reader1 = csv.reader(open('df1.csv', 'r'), delimiter=',', quotechar='"')#read first csv
 wb1=Workbook()
 ws1=wb1.active
 
@@ -89,7 +82,7 @@ for rr1 in reader1:
             continue
         else:
             ele[2]=no
-            name01[ln]=[ele[0], ele[1], no]
+            name01[ln]=[ele[0], ele[1], no]#save F1_Name, start and end position of the name
 
             name01.append(ele)
             ln=ln+1
@@ -101,11 +94,10 @@ for rr1 in reader1:
 
 ele[2]=no+1
 name01[ln]=ele
-name01.sort()
+name01.sort()#sort by name
 ln01=ln+1
 
 wb1.save("ex01.xlsx")
-
 
 
 
@@ -215,26 +207,26 @@ with open("result.csv", "w", newline="") as f:
             for i in range(len_list2):
                 no_match=1
                 for j in range(len_list1):
-                    if list2[i][0]==list1[j][0]:
+                    if list2[i][0]==list1[j][0]:#compare Event_Date
                         no_match=0
                         match1[j]=1
-                        if list2[i][1]==list1[j][1]:
-                            Exact_Match=Exact_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]
+                        if list2[i][1]==list1[j][1]:#If Event_Name is same, Exact_match
+                            Exact_Match=Exact_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
                             F01=F01+" "+list1[j][4]
                             F02=F02+" "+list2[i][4]
                             break
-                        else:
-                            Close_Match=Close_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]
+                        else:#If Event_Name is not same, Close_match
+                            Close_Match=Close_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
                             F01 = F01 + " " + list1[j][4]
                             F02 = F02 + " " + list2[i][4]
                             break
 
-                if no_match==1:
-                    No_Match_DF2=No_Match_DF2+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]
+                if no_match==1:#If there is no Match, No_Match
+                    No_Match_DF2=No_Match_DF2+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
 
-            for j in range(len_list1):
+            for j in range(len_list1):  # find no match in csv01
                 if match1[j]==0:
-                    No_Match_DF1=No_Match_DF1+" "+list1[j][4]+" "+list1[j][1]+" "+list1[j][0]
+                    No_Match_DF1=No_Match_DF1+" "+list1[j][4]+" "+list1[j][1]+" "+list1[j][0]+"\n"
 
             Name_Match=fuzz.token_set_ratio(list1[0][3], list2[0][3])/100
             F2_Match=fuzz.token_set_ratio(F01, F02)/100
