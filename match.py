@@ -42,15 +42,31 @@ def LCSubStr(X, Y, m, n): #calculate longest common string
     return result
 
 def cmp_f1(df01, df02): #calculate match
-    l01=len(df01)
-    l02=len(df02)
+    aa=df01.split(" ")
+    df01_l=aa[0]   #last name
+    df01_f=aa[1]
+
+    bb=df02.split(" ")
+    df02_l=bb[0]
+    df02_f=bb[1]
+
+    l01=len(df01_l)
+    l02=len(df02_l)
 
     ll=min(l01, l02)
 
-    lc=LCSubStr(df01, df02, l01, l02)
+    lc=LCSubStr(df01_l, df02_l, l01, l02)
 
-    if ll==lc:
-        return 1
+    if lc>=ll/2:
+        l01 = len(df01_f)
+        l02 = len(df02_f)
+
+        ll = min(l01, l02)
+
+        lc = LCSubStr(df01_f, df02_f, l01, l02)
+
+        if lc>=ll/2:
+            return 1
 
     return 0
 
@@ -82,19 +98,30 @@ for rr1 in reader1:
             continue
         else:
             ele[2]=no
-            name01[ln]=[ele[0], ele[1], no]#save F1_Name, start and end position of the name
+
+            ch_name=ele[0].split(" ")
+            chn=""
+            for ci in range(1, len(ch_name)):
+                chn=chn+ch_name[ci]
+
+            name01[ln]=[chn+" "+ch_name[0], ele[1], no]#save F1_Name, start and end position of the name
 
             name01.append(ele)
             ln=ln+1
-
 
             ele[0]=rr1[4]
             ele[1]=no
 
 
 ele[2]=no+1
-name01[ln]=ele
+ch_name=ele[0].split(" ")
+chn=""
+for ci in range(1, len(ch_name)):
+    chn=chn+ch_name[ci]
+
+name01[ln]=[chn+" "+ch_name[0], ele[1], no+1]
 name01.sort()#sort by name
+
 ln01=ln+1
 
 wb1.save("ex01.xlsx")
@@ -129,7 +156,13 @@ for rr2 in reader2:
             continue
         else:
             ele[2]=no
-            name02[ln]=[ele[0], ele[1], no]
+
+            ch_name = ele[0].split(" ")
+            chn = ""
+            for ci in range(1, len(ch_name)):
+                chn = chn + ch_name[ci]
+
+            name02[ln]=[chn+" "+ch_name[0], ele[1], no]
 
             name02.append(ele)
             ln=ln+1
@@ -140,7 +173,13 @@ for rr2 in reader2:
 
 
 ele[2]=no+1
-name02[ln]=ele
+
+ch_name=ele[0].split(" ")
+chn=""
+for ci in range(1, len(ch_name)):
+    chn=chn+ch_name[ci]
+name02[ln]=[chn+" "+ch_name[0], ele[1], no+1]
+
 name02.sort()
 ln02=ln
 
@@ -151,7 +190,7 @@ rn02=0
 
 with open("result.csv", "w", newline="") as f:
     writer=csv.writer(f)
-    writer.writerow(["F1_ID", "Match_ID", "Exact_ID", "Close_ID", "No_Match_DF1", "No_Match_DF2", "Name_Match", "Dataes_Match", "F2_Match"])
+    writer.writerow(["F1_ID", "Match_ID", "Exact_ID", "Close_ID", "No_Match_DF1", "No_Match_DF2", "Name_Match", "Dates_Match", "F2_Match"])
 
     loc01="ex01.xlsx"
     rs01=xlrd.open_workbook(loc01)
@@ -165,7 +204,7 @@ with open("result.csv", "w", newline="") as f:
 
     while rn01<ln01 and rn02<ln02:
         cmpN=cmp_f1(name01[rn01][0], name02[rn02][0])
-        if cmpN==1:
+        if cmpN==1: # and fuzz.token_set_ratio(sheet01.cell_value(name01[rn01][1], 4), sheet02.cell_value(name02[rn02][1], 4))>=90:
             list1=[]
             list2=[]
 
