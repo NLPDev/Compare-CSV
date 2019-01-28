@@ -72,7 +72,7 @@ def cmp_f1(df01, df02): #calculate match
 
 
 
-reader1 = csv.reader(open('df1.csv', 'r'), delimiter=',', quotechar='"')#read first csv
+reader1 = csv.reader(open('df3.csv', 'r'), delimiter=',', quotechar='"')#read first csv
 wb1=Workbook()
 ws1=wb1.active
 
@@ -203,6 +203,8 @@ with open("result.csv", "w", newline="") as f:
 
 
     while rn01<ln01 and rn02<ln02:
+
+
         cmpN=cmp_f1(name01[rn01][0], name02[rn02][0])
         if cmpN==1: # and fuzz.token_set_ratio(sheet01.cell_value(name01[rn01][1], 4), sheet02.cell_value(name02[rn02][1], 4))>=90:
             list1=[]
@@ -219,6 +221,19 @@ with open("result.csv", "w", newline="") as f:
 
                 list1.append(ad01)
 
+            while rn01+1<ln01:
+                if name01[rn01][0]==name01[rn01+1][0]:
+                    rn01=rn01+1
+                    for i in range(name01[rn01][1], name01[rn01][2]):
+
+                        ad01 = []
+                        for j in range(7):
+                            ad01.append(sheet01.cell_value(i, j + 1))
+
+                        list1.append(ad01)
+                else:
+                    break
+
             for i in range(name02[rn02][1], name02[rn02][2]):
 
                 ad02=[]
@@ -227,8 +242,21 @@ with open("result.csv", "w", newline="") as f:
 
                 list2.append(ad02)
 
-            F1_ID=list1[0][5]
-            Match_ID=list2[0][5]
+            while rn02+1<ln02:
+                if name02[rn02][0]==name02[rn02+1][0]:
+                    rn02=rn02+1
+                    for i in range(name02[rn02][1], name02[rn02][2]):
+
+                        ad02 = []
+                        for j in range(7):
+                            ad02.append(sheet02.cell_value(i, j + 1))
+
+                        list2.append(ad02)
+                else:
+                    break
+
+            # F1_ID=list1[0][5]
+            # Match_ID=list2[0][5]
             len_list1=len(list1)
             len_list2=len(list2)
 
@@ -238,6 +266,9 @@ with open("result.csv", "w", newline="") as f:
             No_Match_DF1 = ""
             F01=""
             F02=""
+
+            multi_match=[]
+            cnt_m=0
 
             match1=[]
             for j in range(len_list1):
@@ -250,27 +281,70 @@ with open("result.csv", "w", newline="") as f:
                         no_match=0
                         match1[j]=1
                         if list2[i][1]==list1[j][1]:#If Event_Name is same, Exact_match
-                            Exact_Match=Exact_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
-                            F01=F01+" "+list1[j][4]
-                            F02=F02+" "+list2[i][4]
+                            # Exact_Match=Exact_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
+                            # F01=F01+" "+list1[j][4]
+                            # F02=F02+" "+list2[i][4]
+                            ff=0
+                            for ic in range(cnt_m):
+                                if multi_match[ic][0]==list1[j][5] and multi_match[ic][1]==list2[i][5]:
+                                    multi_match[ic][2]=multi_match[ic][2]+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
+                                    multi_match[ic][8]=multi_match[ic][8]+" "+list1[j][4]
+                                    multi_match[ic][9] = multi_match[ic][9] + " " + list2[i][4]
+                                    ff=1
+                                    break
+
+                            if ff==0:
+                                multi_match.append([list1[j][5], list2[i][5], list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n", \
+                                                    "", "", "", fuzz.token_set_ratio(list1[j][3], list2[i][3])/100, 1, list1[j][4], list2[i][4]])
+                                cnt_m=cnt_m+1
                             break
                         else:#If Event_Name is not same, Close_match
-                            Close_Match=Close_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
-                            F01 = F01 + " " + list1[j][4]
-                            F02 = F02 + " " + list2[i][4]
+                            # Close_Match=Close_Match+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
+                            # F01 = F01 + " " + list1[j][4]
+                            # F02 = F02 + " " + list2[i][4]
+                            ff = 0
+                            for ic in range(cnt_m):
+                                if multi_match[ic][0] == list1[j][5] and multi_match[ic][1] == list2[i][5]:
+                                    multi_match[ic][3] = multi_match[ic][2] + list2[i][4] + " " + list2[i][1] + " " + \
+                                                         list2[i][0] + "\n"
+                                    multi_match[ic][8] = multi_match[ic][8] + " " + list1[j][4]
+                                    multi_match[ic][9] = multi_match[ic][9] + " " + list2[i][4]
+                                    ff = 1
+                                    break
+
+                            if ff == 0:
+                                multi_match.append([list1[j][5], list2[i][5],
+                                                    "", list2[i][4] + " " + list2[i][1] + " " + list2[i][0] + "\n", \
+                                                     "", "", fuzz.token_set_ratio(list1[j][3], list2[i][3]) / 100, 1,\
+                                                    list1[j][4], list2[i][4]])
+                                cnt_m = cnt_m + 1
                             break
 
                 if no_match==1:#If there is no Match, No_Match
-                    No_Match_DF2=No_Match_DF2+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
+
+                    for ci in range(cnt_m):
+                        if multi_match[ci][1]==list2[i][5]:
+                            multi_match[ci][5]=multi_match[ci][5]+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
+                            break
+                    # No_Match_DF2=No_Match_DF2+" "+list2[i][4]+" "+list2[i][1]+" "+list2[i][0]+"\n"
 
             for j in range(len_list1):  # find no match in csv01
                 if match1[j]==0:
-                    No_Match_DF1=No_Match_DF1+" "+list1[j][4]+" "+list1[j][1]+" "+list1[j][0]+"\n"
+                    for ci in range(cnt_m):
+                        if multi_match[ci][1]==list1[j][5]:
+                            multi_match[ci][4]=multi_match[ci][5]+list1[j][4]+" "+list1[j][1]+" "+list1[j][0]+"\n"
+                            break
+                    # No_Match_DF1=No_Match_DF1+" "+list1[j][4]+" "+list1[j][1]+" "+list1[j][0]+"\n"
 
-            Name_Match=fuzz.token_set_ratio(list1[0][3], list2[0][3])/100
-            F2_Match=fuzz.token_set_ratio(F01, F02)/100
+            # Name_Match=fuzz.token_set_ratio(list1[0][3], list2[0][3])/100
+            # F2_Match=fuzz.token_set_ratio(F01, F02)/100
 
-            writer.writerow([F1_ID, Match_ID, Exact_Match, Close_Match, No_Match_DF1, No_Match_DF2, Name_Match, 1, F2_Match])
+            for ci in range(cnt_m):
+                writer.writerow([multi_match[ci][0], multi_match[ci][1], multi_match[ci][2], multi_match[ci][3],\
+                                 multi_match[ci][4], multi_match[ci][5], multi_match[ci][6], multi_match[ci][7],\
+                                 fuzz.token_set_ratio(multi_match[ci][8], multi_match[ci][9])/100])
+
+            # writer.writerow([F1_ID, Match_ID, Exact_Match, Close_Match, No_Match_DF1, No_Match_DF2, Name_Match, 1, F2_Match])
 
 
             rn01=rn01+1
