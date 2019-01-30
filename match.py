@@ -8,14 +8,14 @@ import xlrd
 from openpyxl import Workbook
 
 
-# from operator import itemgetter
-#
-# try:
-#     arg1, arg2, arg3, arg4=sys.argv
-#
-# except:
-#     print("e.g. Input format: python match.py df1.csv df2.csv out.csv")
-#     exit()
+from operator import itemgetter
+
+try:
+    arg1, arg2, arg3=sys.argv
+
+except:
+    print("e.g. Input format: python match.py df1.csv df2.csv")
+    exit()
 
 
 
@@ -72,7 +72,9 @@ def cmp_f1(df01, df02): #calculate match
 
 
 
-reader1 = csv.reader(open('df3.csv', 'r'), delimiter=',', quotechar='"')#read first csv
+# reader1 = csv.reader(open('df3.csv', 'r'), delimiter=',', quotechar='"')#read first csv
+
+reader1 = csv.reader(open(arg2, 'r'), delimiter=',', quotechar='"')#read first csv
 wb1=Workbook()
 ws1=wb1.active
 
@@ -130,7 +132,9 @@ wb1.save("ex01.xlsx")
 
 
 
-reader2 = csv.reader(open('df2.csv', 'r'), delimiter=',', quotechar='"')
+# reader2 = csv.reader(open('df2.csv', 'r'), delimiter=',', quotechar='"')
+
+reader2 = csv.reader(open(arg3, 'r'), delimiter=',', quotechar='"')
 wb2=Workbook()
 ws2=wb2.active
 
