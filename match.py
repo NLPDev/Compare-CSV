@@ -10,6 +10,7 @@ from openpyxl import Workbook
 
 from operator import itemgetter
 
+# terminal command format
 try:
     arg1, arg2, arg3=sys.argv
 
@@ -29,17 +30,16 @@ def LCSubStr(X, Y, m, n): #calculate longest common string
     for i in range(m + 1):
         for j in range(n + 1):
             if (i == 0 or j == 0):
-                LCSuff[i][j] = 0
+                LCSuff[i][j] = 0    #initialize
             else:
                 LCSuff[i][j] = max(LCSuff[i][j], LCSuff[i - 1][j])
                 LCSuff[i][j] = max(LCSuff[i][j], LCSuff[i][j - 1])
                 if (X[i-1]==Y[j-1]):
                     LCSuff[i][j] = max(LCSuff[i][j], LCSuff[i - 1][j - 1] + 1)
                     result = max(result, LCSuff[i][j])
-
-
-
     return result
+
+
 
 def cmp_f1(df01, df02): #calculate match
     aa=df01.split(" ")
@@ -72,7 +72,7 @@ def cmp_f1(df01, df02): #calculate match
 
 
 
-# reader1 = csv.reader(open('df3.csv', 'r'), delimiter=',', quotechar='"')#read first csv
+# reader1 = csv.reader(open('df1.csv', 'r'), delimiter=',', quotechar='"')#read first csv
 
 reader1 = csv.reader(open(arg2, 'r'), delimiter=',', quotechar='"')#read first csv
 wb1=Workbook()
@@ -192,6 +192,8 @@ wb2.save("ex02.xlsx")
 rn01=0
 rn02=0
 
+
+
 with open("result.csv", "w", newline="") as f:
     writer=csv.writer(f)
     writer.writerow(["F1_ID", "Match_ID", "Exact_ID", "Close_ID", "No_Match_DF1", "No_Match_DF2", "Name_Match", "Dates_Match", "F2_Match"])
@@ -217,6 +219,7 @@ with open("result.csv", "w", newline="") as f:
             ad01=[]
             ad02=[]
 
+#find matched name in data01
             for i in range(name01[rn01][1], name01[rn01][2]):
 
                 ad01=[]
@@ -238,6 +241,7 @@ with open("result.csv", "w", newline="") as f:
                 else:
                     break
 
+#find matched name in data02
             for i in range(name02[rn02][1], name02[rn02][2]):
 
                 ad02=[]
@@ -359,10 +363,5 @@ with open("result.csv", "w", newline="") as f:
                 rn01=rn01+1
             else:
                 rn02=rn02+1
-
-
-
-
-
 
 
