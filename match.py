@@ -42,13 +42,22 @@ def LCSubStr(X, Y, m, n): #calculate longest common string
 
 
 def cmp_f1(df01, df02): #calculate match
+
+
     aa=df01.split(" ")
     df01_l=aa[0]   #last name
     df01_f=aa[1]
 
+
     bb=df02.split(" ")
     df02_l=bb[0]
     df02_f=bb[1]
+
+    if df01=="Amanda Cooper":
+        print("Cooper   "+df02)
+
+    if df01=="Amanda BobbyCooper":
+        print("Bobby   "+df02)
 
     l01=len(df01_l)
     l02=len(df02_l)
@@ -106,7 +115,7 @@ for rr1 in reader1:
             for ci in range(1, len(ch_name)):
                 chn=chn+ch_name[ci]
 
-            name01[ln]=[chn+" "+ch_name[0], ele[1], no]#save F1_Name, start and end position of the name
+            name01[ln]=[ch_name[0]+" "+chn, ele[1], no]#save F1_Name, start and end position of the name
 
             name01.append(ele)
             ln=ln+1
@@ -166,7 +175,7 @@ for rr2 in reader2:
             for ci in range(1, len(ch_name)):
                 chn = chn + ch_name[ci]
 
-            name02[ln]=[chn+" "+ch_name[0], ele[1], no]
+            name02[ln]=[ch_name[0]+" "+chn, ele[1], no]
 
             name02.append(ele)
             ln=ln+1
@@ -212,6 +221,13 @@ with open("result.csv", "w", newline="") as f:
 
 
         cmpN=cmp_f1(name01[rn01][0], name02[rn02][0])
+
+        rrn1=rn01
+        rrn2=rn02
+
+        dt01=1
+        dt02=1
+
         if cmpN==1: # and fuzz.token_set_ratio(sheet01.cell_value(name01[rn01][1], 4), sheet02.cell_value(name02[rn02][1], 4))>=90:
             list1=[]
             list2=[]
@@ -355,13 +371,22 @@ with open("result.csv", "w", newline="") as f:
             # writer.writerow([F1_ID, Match_ID, Exact_Match, Close_Match, No_Match_DF1, No_Match_DF2, Name_Match, 1, F2_Match])
 
 
-            rn01=rn01+1
-            rn02=rn02+1
+#back previous status, after compare name
+            dt01=rn01-rrn1+1
+            dt02=rn02-rrn2+1
 
+            rn01 = rrn1
+            rn02 = rrn2
+        #
+        # else:
+        #     if name01[rn01][0]<name02[rn02][0]:
+        #         rn01=rn01+1
+        #     else:
+        #         rn02=rn02+1
+
+        if name01[rn01][0] <= name02[rn02][0]:
+            rn01 = rn01 + dt01
         else:
-            if name01[rn01][0]<name02[rn02][0]:
-                rn01=rn01+1
-            else:
-                rn02=rn02+1
+            rn02 = rn02 + dt02
 
 
