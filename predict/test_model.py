@@ -20,7 +20,7 @@ def add_probable_odds(fm_bd_odds):
     :param fm_bd_odds:
     :return:
     """
-    fm_bd_odds['F1_P_Odds'] = (fm_bd_odds['F1_Close_Best'] +  fm_bd_odds['F1_Close_Worst']) / 2
+    fm_bd_odds['F1_P_Odds'] = (fm_bd_odds['F1_Close_Best'] + fm_bd_odds['F1_Close_Worst']) / 2
     fm_bd_odds['F2_P_Odds'] = (fm_bd_odds['F2_Close_Best'] + fm_bd_odds['F2_Close_Worst']) / 2
     return fm_bd_odds
 
