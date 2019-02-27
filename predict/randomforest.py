@@ -266,24 +266,13 @@ fm_bd_all=pd.read_csv('fights_all_pre.csv')
 
 fm_bd_model = fm_bd_all.copy()
 
-# model_cols = ['B_F1_Bool_Result'] + create_F1_F2_cols(['Reach','Height','Age','Exp','Win_PCT', 'Open','Close_Best'])
-# model_cols_w_date = model_cols + ['Event_Date'] #needed to create a train/test split
-# fm_bd_model = fm_bd_model[model_cols_w_date]
+
 fm_bd_model = fm_bd_model.dropna()
 
 fm_bd_model = get_columns(fm_bd_model, cols)
 fm_bd_model=fm_bd_model[~fm_bd_model.isin([np.inf, -np.inf]).any(1)]
 
 
-# df = pre_get_data(fm_bd_model)
-# df=df[~df.isin([np.inf, -np.inf]).any(1)]
-# fm_bd_model = df.dropna()
-
-
-
-# print(list(fm_bd_model))
-# print(df)
-#
 X_train, X_test, y_train, y_test = get_train_test_split(fm_bd_model)
 # print(list(X_train))
 
@@ -293,39 +282,27 @@ X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizin
 rmse_val = []
 
 
-#GitHub Part
 
 from rfpimp import importances, plot_importances
 import scikitplot as skplt
 
-def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 7):
-    # X_train, X_test, Y_train, Y_test = get_train_test_split(X, Y)
+def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 70):
+
     model.fit(X_train,y_train)
     imp = importances(model, X_test, y_test)
     return imp.head(n=return_n_top_fetures),imp
 
 dropdata=fm_bd_model
-# top_10_concat_features,all_f_imp_concat = get_feature_imp(RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1),concat_correct.drop(['B_F1_Bool_Result'], axis=1),concat_correct['B_F1_Bool_Result'])
 
+top_10_concat_features, all_f_imp_concat = get_feature_imp(RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1), X_train, y_train, X_test, y_test)
+top_pos = top_10_concat_features.index.values
+# print(top_10_concat_features)
 
+X_train_pos = X_train[top_pos]
+X_test_pos = X_test[top_pos]
 #
-
-for K in range(20):
-    K = K + 1
-    print(K)
-
-    top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train,
-                                                               X_test, y_test)
-
-    top_pos = top_10_concat_features.index.values
-    # print(top_10_concat_features)
-
-    X_train_pos = X_train[top_pos]
-    X_test_pos = X_test[top_pos]
-
-    knn = KNeighborsClassifier(n_neighbors=K)
-    knn.fit(X_train_pos, y_train)
-    pred = knn.predict(X_test_pos)
-    print(knn.score(X_test_pos, y_test))
-
+rfc = RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1)
+rfc.fit(X_train_pos, y_train)
+pred = rfc.predict(X_test_pos)
+print(accuracy_score(y_test, pred))
 
