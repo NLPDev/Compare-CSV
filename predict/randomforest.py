@@ -24,14 +24,20 @@ import seaborn as sns
 
 matplotlib.style.use('ggplot')
 
-
-#
-# def create_F1_F2_cols(cols):
-#     F12_cols = []
-#     for x in cols:
-#         F12_cols.append('F1_' + x)
-#         F12_cols.append('F2_' + x)
-#     return F12_cols
+get_weight = {
+    "BW":61.2,
+    "LHW":93.0,
+    "WW":77.1,
+    "HW":120.2,
+    "LW":70.3,
+    "MW":83.9,
+    "FW":65.8,
+    "FlyW":56.7,
+    "W_FW":65.8,
+    "W_SW":52.2,
+    "W_FlyW":56.7,
+    "W_BW":61.2
+}
 
 def get_train_test_split(df, test_params=('date_cutoff', '2018'), drop_nan=True, bool_result_only=True):
     """
@@ -118,7 +124,6 @@ def create_F1_F2_cols(col_base_list, output='both'):
                 F12_cols.append('F2_' + x)
     return F12_cols
 
-
 def change_col_prefix(df, old_prefix, new_prefix ):
     """
     changes the column names from old_prefix to new_prefix
@@ -133,7 +138,6 @@ def change_col_prefix(df, old_prefix, new_prefix ):
     np_cols = [col.replace(old_prefix,new_prefix) for col in op_cols]
     rename_map = {x[0]:x[1] for x in zip(op_cols, np_cols)}
     return df.rename(columns=rename_map)
-
 
 def do_F1_F2_operation (df, cols, operation):
     """
@@ -249,47 +253,81 @@ def pre_get_data(df):
     res_df = df.iloc[:, select_cols]
 
     list_pop = list(res_df)
-    list_res = ['B_F1_Bool_Result', 'Event_Date']
+    list_res = ['B_F1_Bool_Result', 'Event_Date', 'B_WClass']
+
     list_pop.pop()
+    for item in list_pop:
+        if "F1" in item:
+            aa = item
+            bb = aa.replace("F1", "F2")
+            if bb in list_pop:
+                cc = aa.replace("F1", "F12")
+                df[cc] = df[aa] / df[bb]
+                list_res.append(cc)
 
-    for i in range(150):
-        list_pop.pop()
 
-    list_res = list_res + list_pop
+        elif "F2" not in item:
+            list_res.append(item)
 
+
+    bw = df['B_WClass']
+    i = -1
+    j = df.columns.get_loc('B_WClass')
+
+    for item in bw:
+        i = i + 1
+        if item != item:
+            df.iloc[i, j] = np.nan
+        else:
+            df.iloc[i, j] = get_weight[item]
+            # print(type(df.iloc[i, j]))
+
+    df['B_WClass'] = df['B_WClass'].astype(float)
     return df[list_res]
 
+def add_weight(df, source):
+    bw = source['B_WClass']
 
+    add_list = []
+
+    for item in bw:
+
+        if item != item:
+            add_list.append(np.nan)
+            continue
+        else:
+            add_list.append(get_weight[item])
+
+    df['B_Weight'] = add_list
 
 #Data
-fm_bd_all=pd.read_csv('fights_all_pre.csv')
+fm_bd_all=pd.read_csv('fights_all.csv')
 
 fm_bd_model = fm_bd_all.copy()
-
+fm_bd_model = pre_get_data(fm_bd_model)
+# fm_bd_model = get_columns(fm_bd_model, cols)
+# fm_bd_model = pre_get_data(fm_bd_model)
+# add_weight(fm_bd_model, fm_bd_all)
 
 fm_bd_model = fm_bd_model.dropna()
-
-fm_bd_model = get_columns(fm_bd_model, cols)
 fm_bd_model=fm_bd_model[~fm_bd_model.isin([np.inf, -np.inf]).any(1)]
 
 
+
 X_train, X_test, y_train, y_test = get_train_test_split(fm_bd_model)
-# print(list(X_train))
 
 X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizing
 
-
 rmse_val = []
-
-
 
 from rfpimp import importances, plot_importances
 import scikitplot as skplt
 
-def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 70):
+def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 10):
 
     model.fit(X_train,y_train)
     imp = importances(model, X_test, y_test)
+    # print(imp)
     return imp.head(n=return_n_top_fetures),imp
 
 dropdata=fm_bd_model
