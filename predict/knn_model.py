@@ -347,22 +347,36 @@ dropdata=fm_bd_model
 
 #
 
-for K in range(20):
-    K = K + 1
-    print(K)
+# for K in range(20):
+#     K = K + 1
+#     print(K)
+#     top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train,
+#                                                                X_test, y_test)
+#
+#     top_pos = top_10_concat_features.index.values
+#     # print(top_10_concat_features)
+#
+#     X_train_pos = X_train[top_pos]
+#     X_test_pos = X_test[top_pos]
+#
+#     knn = KNeighborsClassifier(n_neighbors=K)
+#     knn.fit(X_train_pos, y_train)
+#     pred = knn.predict(X_test_pos)
+#     print(knn.score(X_test_pos, y_test))
 
-    top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train,
+
+K = 13
+top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train,
                                                                X_test, y_test)
 
-    top_pos = top_10_concat_features.index.values
-    # print(top_10_concat_features)
+top_pos = top_10_concat_features.index.values
+# print(top_10_concat_features)
 
-    X_train_pos = X_train[top_pos]
-    X_test_pos = X_test[top_pos]
+X_train_pos = X_train[top_pos]
+X_test_pos = X_test[top_pos]
 
-    knn = KNeighborsClassifier(n_neighbors=K)
-    knn.fit(X_train_pos, y_train)
-    pred = knn.predict(X_test_pos)
-    print(knn.score(X_test_pos, y_test))
+knn = KNeighborsClassifier(n_neighbors=K)
+knn.fit(X_train_pos, y_train)
+pred = knn.predict(X_test_pos)
 
-
+print(pred[5])
