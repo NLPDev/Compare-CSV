@@ -1,6 +1,6 @@
 import numpy as np
-import scipy as sp
 import pandas as pd
+import scipy as sp
 import collections
 import re
 
@@ -379,4 +379,3 @@ knn = KNeighborsClassifier(n_neighbors=K)
 knn.fit(X_train_pos, y_train)
 pred = knn.predict(X_test_pos)
 
-print(pred[5])

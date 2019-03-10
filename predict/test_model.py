@@ -8,6 +8,7 @@ def add_random_win_probs(fm_bd):
     :param fm_bd_base:
     :return:
     """
+
     fm_bd['F1_P_Win'] = np.random.uniform(0, 1, size=len(fm_bd))
     fm_bd['F2_P_Win'] = 1 - fm_bd['F1_P_Win']
     return fm_bd
