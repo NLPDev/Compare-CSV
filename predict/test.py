@@ -1,17 +1,8 @@
-import pandas as pd
-import numpy as np
-import math
-
-"""
-KNN Part
-"""
-
 import numpy as np
 import scipy as sp
 import pandas as pd
 import collections
 import re
-
 
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
@@ -20,20 +11,15 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import neighbors
 from sklearn.metrics import mean_squared_error
-
+from sklearn import preprocessing
 from math import sqrt
 import math
-
-from sklearn import preprocessing
 
 import matplotlib
 import matplotlib.pyplot as plt
 import seaborn as sns
 
 matplotlib.style.use('ggplot')
-
-#'BW', 'LHW', 'WW', 'HW', 'LW', 'W_FW', 'MW', 'FW',
-#'W_SW', 'W_FlyW', 'FlyW', 'W_BW'
 
 get_weight = {
     "BW":61.2,
@@ -356,6 +342,29 @@ pred = knn.predict(X_test_pos)
 prob = accuracy_score(y_test, pred)
 pred_proba = knn.predict_proba(X_test_pos)
 
+pos = []
+pos.append('FO')
+pos.append('Event_Date')
+pos.append('F1_Close_Best')
+pos.append('F1_Close_Worst')
+pos.append('F2_Close_Best')
+pos.append('F2_Close_Worst')
+pos.append('T_Event_URL')
+
+get_index = X_test_pos.index.tolist()
+
+df_rest = pd.DataFrame(fm_bd_all, columns=pos, index=get_index)
+
+df_prob = X_test_pos
+df_prob = df_prob.assign(FO = df_rest['FO'])
+df_prob = df_prob.assign(Event_Date = df_rest['Event_Date'])
+df_prob = df_prob.assign(F1_Close_Best = df_rest['F1_Close_Best'])
+df_prob = df_prob.assign(F1_Close_Worst = df_rest['F1_Close_Worst'])
+df_prob = df_prob.assign(F2_Close_Best = df_rest['F2_Close_Best'])
+df_prob = df_prob.assign(F2_Close_Worst = df_rest['F2_Close_Worst'])
+df_prob = df_prob.assign(T_Event_URL = df_rest['T_Event_URL'])
+
+
 def add_win_probs(fm_bd):
     """
     adds P_Win probabilities. Currently random. Should be based on model output
@@ -376,8 +385,8 @@ def add_probable_odds(fm_bd_odds):
     :param fm_bd_odds:
     :return:
     """
-    fm_bd_odds['F1_P_Odds'] = (fm_bd_all['F1_Close_Best'] + fm_bd_all['F1_Close_Worst']) / 2
-    fm_bd_odds['F2_P_Odds'] = (fm_bd_all['F2_Close_Best'] + fm_bd_all['F2_Close_Worst']) / 2
+    fm_bd_odds['F1_P_Odds'] = (fm_bd_odds['F1_Close_Best'] + fm_bd_odds['F1_Close_Worst']) / 2
+    fm_bd_odds['F2_P_Odds'] = (fm_bd_odds['F2_Close_Best'] + fm_bd_odds['F2_Close_Worst']) / 2
     return fm_bd_odds
 
 
@@ -498,16 +507,18 @@ def run_simulation(fm_bd_input, bank=100, bet_strategy='p_balanced', bank_strate
 
     return fm_bd_sim_results
 
-df = X_test_pos
+df = df_prob
 
 # adding columns to execute strategy
 df = add_win_probs(df) # should be replaced with model outputs
 
 df = add_probable_odds(df) # TODO: needs to be more nuanced
-exit()
+
 df['Bet_On'] = df.apply(get_bet_on, axis=1, args=(0.7,)) # cutoff argument can be flexible
 
-df_test = df[df['Event_Date'] > '2018'].dropna(subset=['F1_Open']).sort_values('Event_Date', ascending=False) # testing on 2018's data
+df_test = df
+
+# df_test = df[df['Event_Date'] > '2018'].dropna(subset=['F1_Open']).sort_values('Event_Date', ascending=False) # testing on 2018's data
 df_test = run_simulation(df_test)
 df_test['Bank_End'].tail()
 
@@ -515,3 +526,4 @@ print(df_test['Bank_End'].tail())
 #TODO: strategy results for different p_score cutoffs
 #TODO: results aggregate stats (# events, # bets, win/loss ratio, etc)
 #TODO: plots
+
