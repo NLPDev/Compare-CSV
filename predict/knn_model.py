@@ -378,4 +378,15 @@ X_test_pos = X_test[top_pos]
 knn = KNeighborsClassifier(n_neighbors=K)
 knn.fit(X_train_pos, y_train)
 pred = knn.predict(X_test_pos)
+pred_proba = knn.predict_proba(X_test_pos)
+
+print(len(pred_proba))
+# print(len())
+
+# X_test_pos['added'] = np.random.uniform(0, 1, size=len(X_test_pos))
+df = X_test_pos.assign(Mark = np.random.uniform(0, 1, size=len(X_test_pos)))
+df['Mark'] = pred_proba[:, 0]
+print(list(df['Mark']))
+# for i in range(len(pred_proba)):
+#     X_test_pos.loc[i, 'added'] = pred_proba[i, 0]
 

@@ -316,15 +316,6 @@ fm_bd_all=pd.read_csv('fights_all.csv')
 
 fm_bd_model = fm_bd_all.copy()
 
-# model_cols = ['B_F1_Bool_Result'] + create_F1_F2_cols(['Reach','Height','Age','Exp','Win_PCT', 'Open','Close_Best'])
-# model_cols_w_date = model_cols + ['Event_Date'] #needed to create a train/test split
-# fm_bd_model = fm_bd_model[model_cols_w_date]
-# fm_bd_model = fm_bd_model.dropna()
-
-# fm_bd_model = get_columns(fm_bd_model, cols)
-# fm_bd_model=fm_bd_model[~fm_bd_model.isin([np.inf, -np.inf]).any(1)]
-
-
 df = pre_get_data(fm_bd_model)
 
 df=df.dropna()
@@ -337,9 +328,6 @@ X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizin
 
 rmse_val = []
 
-
-#GitHub Part
-
 from rfpimp import importances, plot_importances
 import scikitplot as skplt
 
@@ -350,28 +338,6 @@ def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures
     return imp.head(n=return_n_top_fetures),imp
 
 dropdata=fm_bd_model
-# top_10_concat_features,all_f_imp_concat = get_feature_imp(RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1),concat_correct.drop(['B_F1_Bool_Result'], axis=1),concat_correct['B_F1_Bool_Result'])
-
-
-#
-
-# for K in range(20):
-#     K = K + 1
-#     print(K)
-#     top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train,
-#                                                                X_test, y_test)
-#
-#     top_pos = top_10_concat_features.index.values
-#     # print(top_10_concat_features)
-#
-#     X_train_pos = X_train[top_pos]
-#     X_test_pos = X_test[top_pos]
-#
-#     knn = KNeighborsClassifier(n_neighbors=K)
-#     knn.fit(X_train_pos, y_train)
-#     pred = knn.predict(X_test_pos)
-#     print(knn.score(X_test_pos, y_test))
-
 
 K = 13
 top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train,
@@ -388,16 +354,18 @@ knn.fit(X_train_pos, y_train)
 pred = knn.predict(X_test_pos)
 
 prob = accuracy_score(y_test, pred)
+pred_proba = knn.predict_proba(X_test_pos)
 
-def add_random_win_probs(fm_bd):
+def add_win_probs(fm_bd):
     """
     adds P_Win probabilities. Currently random. Should be based on model output
     :param fm_bd_base:
     :return:
     """
-
-    fm_bd['F1_P_Win'] = prob
-    fm_bd['F2_P_Win'] = 1 - fm_bd['F1_P_Win']
+    fm_bd = fm_bd.assign(F1_P_Win = np.random.uniform(0, 1, size=len(fm_bd)))
+    fm_bd = fm_bd.assign(F2_P_Win=np.random.uniform(0, 1, size=len(fm_bd)))
+    fm_bd['F1_P_Win'] = pred_proba[:, 0]
+    fm_bd['F2_P_Win'] = pred_proba[:, 1]
     return fm_bd
 
 
@@ -408,8 +376,8 @@ def add_probable_odds(fm_bd_odds):
     :param fm_bd_odds:
     :return:
     """
-    fm_bd_odds['F1_P_Odds'] = (fm_bd_odds['F1_Close_Best'] + fm_bd_odds['F1_Close_Worst']) / 2
-    fm_bd_odds['F2_P_Odds'] = (fm_bd_odds['F2_Close_Best'] + fm_bd_odds['F2_Close_Worst']) / 2
+    fm_bd_odds['F1_P_Odds'] = (fm_bd_all['F1_Close_Best'] + fm_bd_all['F1_Close_Worst']) / 2
+    fm_bd_odds['F2_P_Odds'] = (fm_bd_all['F2_Close_Best'] + fm_bd_all['F2_Close_Worst']) / 2
     return fm_bd_odds
 
 
@@ -530,11 +498,13 @@ def run_simulation(fm_bd_input, bank=100, bet_strategy='p_balanced', bank_strate
 
     return fm_bd_sim_results
 
-df = pd.read_csv('fights_all.csv')
+df = X_test_pos
+
 # adding columns to execute strategy
-df = add_random_win_probs(df) # should be replaced with model outputs
+df = add_win_probs(df) # should be replaced with model outputs
 
 df = add_probable_odds(df) # TODO: needs to be more nuanced
+exit()
 df['Bet_On'] = df.apply(get_bet_on, axis=1, args=(0.7,)) # cutoff argument can be flexible
 
 df_test = df[df['Event_Date'] > '2018'].dropna(subset=['F1_Open']).sort_values('Event_Date', ascending=False) # testing on 2018's data
