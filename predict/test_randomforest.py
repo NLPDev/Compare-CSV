@@ -4,6 +4,7 @@ import pandas as pd
 import collections
 import re
 
+
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import train_test_split
@@ -11,9 +12,11 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn import neighbors
 from sklearn.metrics import mean_squared_error
-from sklearn import preprocessing
+
 from math import sqrt
 import math
+
+from sklearn import preprocessing
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -75,6 +78,7 @@ def get_train_test_split(df, test_params=('date_cutoff', '2018'), drop_nan=True,
     # print(y_test.iloc[0])
 
     return X_train, X_test, y_train, y_test
+
 
 def get_scaled(X_train, X_test):
     scaler = MinMaxScaler(feature_range=(-1, 1))
@@ -250,20 +254,20 @@ def pre_get_data(df):
 
     list_pop = list(res_df)
     list_res = ['B_F1_Bool_Result', 'Event_Date', 'B_WClass']
-    list_pop.pop()
 
+    list_pop.pop()
     for item in list_pop:
         if "F1" in item:
             aa = item
             bb = aa.replace("F1", "F2")
             if bb in list_pop:
                 cc = aa.replace("F1", "F12")
-                df[cc] = df[aa] - df[bb]
+                df[cc] = df[aa] / df[bb]
                 list_res.append(cc)
+
 
         elif "F2" not in item:
             list_res.append(item)
-
 
 
     bw = df['B_WClass']
@@ -276,11 +280,10 @@ def pre_get_data(df):
             df.iloc[i, j] = np.nan
         else:
             df.iloc[i, j] = get_weight[item]
+            # print(type(df.iloc[i, j]))
 
     df['B_WClass'] = df['B_WClass'].astype(float)
-    res_df = df[list_res]
-
-    return res_df
+    return df[list_res]
 
 def add_weight(df, source):
     bw = source['B_WClass']
@@ -301,15 +304,18 @@ def add_weight(df, source):
 fm_bd_all=pd.read_csv('fights_all.csv')
 
 fm_bd_model = fm_bd_all.copy()
+fm_bd_model = pre_get_data(fm_bd_model)
+# fm_bd_model = get_columns(fm_bd_model, cols)
+# fm_bd_model = pre_get_data(fm_bd_model)
+# add_weight(fm_bd_model, fm_bd_all)
 
-df = pre_get_data(fm_bd_model)
+fm_bd_model = fm_bd_model.dropna()
+fm_bd_model=fm_bd_model[~fm_bd_model.isin([np.inf, -np.inf]).any(1)]
 
-df=df.dropna()
-df=df[~df.isin([np.inf, -np.inf]).any(1)]
 
-fm_bd_model = df
 
 X_train, X_test, y_train, y_test = get_train_test_split(fm_bd_model)
+
 X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizing
 
 rmse_val = []
@@ -318,29 +324,35 @@ from rfpimp import importances, plot_importances
 import scikitplot as skplt
 
 def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 10):
-    # X_train, X_test, Y_train, Y_test = get_train_test_split(X, Y)
+
     model.fit(X_train,y_train)
     imp = importances(model, X_test, y_test)
+    # print(imp)
     return imp.head(n=return_n_top_fetures),imp
 
 dropdata=fm_bd_model
 
-K = 13
-top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train,
-                                                               X_test, y_test)
-
+top_10_concat_features, all_f_imp_concat = get_feature_imp(RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1), X_train, y_train, X_test, y_test)
 top_pos = top_10_concat_features.index.values
 # print(top_10_concat_features)
 
 X_train_pos = X_train[top_pos]
 X_test_pos = X_test[top_pos]
+#
+rfc = RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1)
+rfc.fit(X_train_pos, y_train)
+pred = rfc.predict(X_test_pos)
+# print(accuracy_score(y_test, pred))
 
-knn = KNeighborsClassifier(n_neighbors=K)
-knn.fit(X_train_pos, y_train)
-pred = knn.predict(X_test_pos)
+
+
+X_train_pos = X_train[top_pos]
+X_test_pos = X_test[top_pos]
+
 
 prob = accuracy_score(y_test, pred)
-pred_proba = knn.predict_proba(X_test_pos)
+pred_proba = rfc.predict_proba(X_test_pos)
+
 
 pos = []
 pos.append('FO')
@@ -526,7 +538,7 @@ df_test = df
 df_test = run_simulation(df_test)
 df_test['Bank_End'].tail()
 
-print(df_test['Bank_End'].head())
+print(df_test['Bank_End'].tail())
 #TODO: strategy results for different p_score cutoffs
 #TODO: results aggregate stats (# events, # bets, win/loss ratio, etc)
 #TODO: plots
