@@ -1,31 +1,12 @@
 import numpy as np
 import pandas as pd
-import scipy as sp
-import collections
-import re
-
 
 from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import neighbors
-from sklearn.metrics import mean_squared_error
-
-from math import sqrt
 import math
-
-from sklearn import preprocessing
-
 import matplotlib
-import matplotlib.pyplot as plt
 import seaborn as sns
-
 matplotlib.style.use('ggplot')
-
-#'BW', 'LHW', 'WW', 'HW', 'LW', 'W_FW', 'MW', 'FW',
-#'W_SW', 'W_FlyW', 'FlyW', 'W_BW'
 
 get_weight = {
     "BW":61.2,
@@ -61,7 +42,6 @@ def get_train_test_split(df, test_params=('date_cutoff', '2018'), drop_nan=True,
     if drop_nan:
         df = df.dropna()
 
-    # print(df)
 
     # Create train and test splits
     if test_params[0] == 'pct_last_rows':
@@ -78,18 +58,12 @@ def get_train_test_split(df, test_params=('date_cutoff', '2018'), drop_nan=True,
     X_train, y_train = df_train.iloc[:, 1:], df_train.iloc[:, 0]
     X_test, y_test = df_test.iloc[:, 1:], df_test.iloc[:, 0]
 
-    # print(y_test.iloc[0])
 
     return X_train, X_test, y_train, y_test
 
 def get_scaled(X_train, X_test):
     scaler = MinMaxScaler(feature_range=(-1, 1))
-
-    # scaler = preprocessing.StandardScaler()
-
     X_train_scaled = scaler.fit_transform(X_train)
-
-    # print(X_train_scaled)
     X_test_scaled = scaler.transform(X_test)
 
     return X_train_scaled, X_test_scaled, scaler
@@ -150,7 +124,7 @@ def do_F1_F2_operation (df, cols, operation):
     :param operation: 'subtract', df_F1 - df_F2
                       'over', df_F1 / df_F2
                       pct_F1, (df_F2 - df_F1)/df_F1
-    :return:
+    :return: calculated with F1, F2
     """
     df_f1 = df[create_F1_F2_cols(cols, output='F1')]
     df_f2 = df[create_F1_F2_cols(cols, output='F2')]
@@ -238,11 +212,18 @@ cols = ((['B_F1_Bool_Result'],'direct'),
 
 
 def pre_get_data(df):
+
+    """
+    Remove columns that contain strings.
+    :param df:
+    :return: Return dataframe only with number values.
+    """
+
     df_len = len(df.iloc[0, :]) - 1
 
     select_cols = []
 
-    for i in range(df_len):
+    for i in range(df_len): #Get Columns that contain number values
 
         if type(df.iloc[0, i + 1]) is np.float64:
             if math.isnan(df.iloc[0, i + 1]) == False:
@@ -305,47 +286,25 @@ def add_weight(df, source):
 
 #Data
 fm_bd_all=pd.read_csv('fights_all.csv')
-
 fm_bd_model = fm_bd_all.copy()
-
-# model_cols = ['B_F1_Bool_Result'] + create_F1_F2_cols(['Reach','Height','Age','Exp','Win_PCT', 'Open','Close_Best'])
-# model_cols_w_date = model_cols + ['Event_Date'] #needed to create a train/test split
-# fm_bd_model = fm_bd_model[model_cols_w_date]
-# fm_bd_model = fm_bd_model.dropna()
-
-# fm_bd_model = get_columns(fm_bd_model, cols)
-# fm_bd_model=fm_bd_model[~fm_bd_model.isin([np.inf, -np.inf]).any(1)]
-
-
 df = pre_get_data(fm_bd_model)
-
 df=df.dropna()
-df=df[~df.isin([np.inf, -np.inf]).any(1)]
-
+df=df[~df.isin([np.inf, -np.inf]).any(1)]   #Remove values divided by 0
 fm_bd_model = df
 
 X_train, X_test, y_train, y_test = get_train_test_split(fm_bd_model)
 X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizing
 
 rmse_val = []
-
-
-#GitHub Part
-
-from rfpimp import importances, plot_importances
-import scikitplot as skplt
+from rfpimp import importances
 
 def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 10):
-    # X_train, X_test, Y_train, Y_test = get_train_test_split(X, Y)
+
     model.fit(X_train,y_train)
     imp = importances(model, X_test, y_test)
     return imp.head(n=return_n_top_fetures),imp
 
 dropdata=fm_bd_model
-# top_10_concat_features,all_f_imp_concat = get_feature_imp(RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1),concat_correct.drop(['B_F1_Bool_Result'], axis=1),concat_correct['B_F1_Bool_Result'])
-
-
-#
 
 # for K in range(20):
 #     K = K + 1
@@ -370,7 +329,6 @@ top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(
                                                                X_test, y_test)
 
 top_pos = top_10_concat_features.index.values
-# print(top_10_concat_features)
 
 X_train_pos = X_train[top_pos]
 X_test_pos = X_test[top_pos]
@@ -379,14 +337,4 @@ knn = KNeighborsClassifier(n_neighbors=K)
 knn.fit(X_train_pos, y_train)
 pred = knn.predict(X_test_pos)
 pred_proba = knn.predict_proba(X_test_pos)
-
-print(len(pred_proba))
-# print(len())
-
-# X_test_pos['added'] = np.random.uniform(0, 1, size=len(X_test_pos))
-df = X_test_pos.assign(Mark = np.random.uniform(0, 1, size=len(X_test_pos)))
-df['Mark'] = pred_proba[:, 0]
-print(list(df['Mark']))
-# for i in range(len(pred_proba)):
-#     X_test_pos.loc[i, 'added'] = pred_proba[i, 0]
 

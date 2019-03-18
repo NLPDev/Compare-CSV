@@ -1,31 +1,17 @@
 import numpy as np
 import pandas as pd
-import scipy as sp
-import collections
-import re
 
 from xgboost import XGBClassifier
-from sklearn.neighbors import KNeighborsClassifier
-from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.ensemble import RandomForestClassifier
-from sklearn import neighbors
-from sklearn.metrics import mean_squared_error
-
-from math import sqrt
+from sklearn.model_selection import learning_curve
 import math
 
-from sklearn import preprocessing
-
-import matplotlib
-import matplotlib.pyplot as plt
+#Visualization
 import seaborn as sns
-
-matplotlib.style.use('ggplot')
-
-#'BW', 'LHW', 'WW', 'HW', 'LW', 'W_FW', 'MW', 'FW',
-#'W_SW', 'W_FlyW', 'FlyW', 'W_BW'
+import matplotlib.pyplot as plt
+import itertools
+import scikitplot as skplt
 
 get_weight = {
     "BW":61.2,
@@ -317,11 +303,7 @@ X_train, X_test, y_train, y_test = get_train_test_split(fm_bd_model)
 X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizing
 
 rmse_val = []
-
-
-
-from rfpimp import importances, plot_importances
-import scikitplot as skplt
+from rfpimp import importances
 
 def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 10):
 
@@ -344,5 +326,271 @@ xgb.fit(X_train_pos, y_train)
 pred = xgb.predict(X_test_pos)
 pred_proba = xgb.predict_proba(X_test_pos)
 
-print(accuracy_score(y_test, pred))
+# print(accuracy_score(y_test, pred))
 
+"""
+Visualization
+"""
+
+def xgb_model(X_train, y_train, X_test, y_test, results):
+    xgbc = XGBClassifier()
+    xgbc.fit(X_train, y_train)
+    Y_pred = xgbc.predict(X_test)
+    results['XGB'] = {}
+    results['XGB']['Accuracy'] = accuracy_score(y_test, Y_pred)
+    results['XGB']['cm'] = confusion_matrix(y_test, Y_pred)
+    results['XGB']['f1_macro'] = f1_score(y_test, Y_pred, average='macro')
+    results['XGB']['f1_class'] = f1_score(y_test, Y_pred, average=None)
+    results['XGB']['pred_prob'] = xgbc.predict_proba(X_test)
+
+
+def plot_cm(cm, title):
+    plt.figure()
+    labels = ['Blue', 'Draw', 'No Contest', 'Red']
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(labels))
+    plt.xticks(tick_marks, labels, rotation=45)
+    plt.yticks(tick_marks, labels)
+
+    fmt = 'd'
+    thresh = cm.max() / 2.
+
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.tight_layout()
+    # plt.show()
+
+
+def pprint_results(results, Y_test):
+    for model in results.keys():
+        print(f"==========RESULTS FOR {model}============")
+        print(f"Accuracy of {model} = {results[model]['Accuracy']}")
+        print(f"F1 Macro of {model} = {results[model]['f1_macro']}")
+        print(f"F1 Each class of {model} = {results[model]['f1_class']}")
+        plot_cm(results[model]['cm'], f"{model} CM")
+        skplt.metrics.plot_roc(Y_test, results[model]['pred_prob'], title=f"{model} ROC curve")
+
+
+
+
+
+
+results = dict()
+xgb_model(X_train, y_train, X_test, y_test, results)
+
+pprint_results(results, y_test)
+
+plt.show()
+def draw_learning_curve(model, X, Y, model_name, train_sizes=[500, 1000, 1500, 1852]):
+    train_sizes, train_scores, test_scores = learning_curve(model, X, Y, cv=5, train_sizes=train_sizes)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+
+    plt.grid()
+    plt.xlabel("Training_examples")
+    plt.ylabel("Scores")
+    plt.plot(train_sizes, train_scores_mean, label="Training_scores")
+    plt.plot(train_sizes, test_scores_mean, label="Test Scores")
+    plt.legend(loc="best")
+    plt.title(f"{model_name} Learning Curve")
+    plt.show()
+
+
+# draw_learning_curve(XGBClassifier(), X)
+#
+# #Test Model
+# pos = []
+# pos.append('FO')
+# pos.append('Event_Date')
+# pos.append('F1_Close_Best')
+# pos.append('F1_Close_Worst')
+# pos.append('F2_Close_Best')
+# pos.append('F2_Close_Worst')
+# pos.append('T_Event_URL')
+#
+# get_index = X_test_pos.index.tolist()
+#
+# df_rest = pd.DataFrame(fm_bd_all, columns=pos, index=get_index)
+#
+#
+# """
+# Add these item to test model
+# """
+# df_prob = X_test_pos
+# df_prob = df_prob.assign(FO = df_rest['FO'])
+# df_prob = df_prob.assign(Event_Date = df_rest['Event_Date'])
+# df_prob = df_prob.assign(F1_Close_Best = df_rest['F1_Close_Best'])
+# df_prob = df_prob.assign(F1_Close_Worst = df_rest['F1_Close_Worst'])
+# df_prob = df_prob.assign(F2_Close_Best = df_rest['F2_Close_Best'])
+# df_prob = df_prob.assign(F2_Close_Worst = df_rest['F2_Close_Worst'])
+# df_prob = df_prob.assign(T_Event_URL = df_rest['T_Event_URL'])
+#
+#
+# def add_win_probs(fm_bd):
+#     """
+#     adds P_Win probabilities. Currently random. Should be based on model output
+#     :param fm_bd_base:
+#     :return:
+#     """
+#     fm_bd = fm_bd.assign(F1_P_Win = np.random.uniform(0, 1, size=len(fm_bd)))
+#     fm_bd = fm_bd.assign(F2_P_Win=np.random.uniform(0, 1, size=len(fm_bd)))
+#     fm_bd['F1_P_Win'] = pred_proba[:, 0]
+#     fm_bd['F2_P_Win'] = pred_proba[:, 1]
+#     return fm_bd
+#
+#
+# def add_probable_odds(fm_bd_odds):
+#     """
+#     adds odds used to place bets. Currently uses a simple average between Best & Worst.
+#     TODO: make a more realistic function since Best/Worst are typically outliers.
+#     :param fm_bd_odds:
+#     :return:
+#     """
+#     fm_bd_odds['F1_P_Odds'] = (fm_bd_odds['F1_Close_Best'] + fm_bd_odds['F1_Close_Worst']) / 2
+#     fm_bd_odds['F2_P_Odds'] = (fm_bd_odds['F2_Close_Best'] + fm_bd_odds['F2_Close_Worst']) / 2
+#     return fm_bd_odds
+#
+#
+# def get_bet_on(x, p_cutoff=0.7):
+#     """
+#     binary decision on which fighter to place a bet on. Currently based on a simple cutoff.
+#     :param x:
+#     :param p_cutoff: minimum win probability to place a bet
+#     :return: used to modify df as .apply(get_bet_on, axis=1)
+#     """
+#
+#     if x['F1_P_Win'] > p_cutoff:
+#         return 'F1'
+#     elif x['F2_P_Win'] > p_cutoff:
+#         return 'F2'
+#     else:
+#         return np.nan
+#
+#
+# def execute_strategy(event_dict, event_bank=100, strategy = 'p_balanced'):
+#     """
+#     runs a betting strategy on one event (passed as a dict).
+#     :param event_dict: dictionary with one event, containing all event's bouts
+#     :param event_bank: total amount of money to bet on the event
+#     :param strategy: 'even' - equal bets on all bouts, 'p_balanced' - bet size balanced to P_Win scores
+#     :return: event_dict with strategy results
+#     """
+#     total_bets = 0
+#     total_return = 0
+#     sum_probs = 0
+#     bouts_w_bets = 0
+#
+#     for idx, bout in event_dict.items():
+#         if bout['Bet_On'] == 'F1':
+#             sum_probs += bout['F1_P_Win']
+#             bouts_w_bets += 1
+#         elif bout['Bet_On'] == 'F2':
+#             sum_probs += bout['F2_P_Win']
+#             bouts_w_bets += 1
+#
+#     if bouts_w_bets==0:
+#         for idx, bout in event_dict.items():
+#             bout['Bet_Amount'] = bout['Bet_Return'] = bout['Bet_Net_Return'] = bout['Total_Bet_Amount'] = \
+#                 bout['Total_Bet_Return'] = bout['Total_Net_Return'] = np.nan
+#         return event_dict
+#
+#
+#     even_bet_base = event_bank / bouts_w_bets
+#     p_balanced_bet_base = event_bank / sum_probs
+#     for idx, bout in event_dict.items():
+#         if bout['Bet_On'] == 'F1':
+#             if strategy == 'even': #only bet amount changes with strategy
+#                 bet_amount = even_bet_base
+#             elif strategy == 'p_balanced':
+#                 bet_amount = p_balanced_bet_base * bout['F1_P_Win']
+#             bet_return = bet_amount * bout['F1_P_Odds'] if bout['FO'] == 'Fighter_1' else 0
+#         elif bout['Bet_On'] == 'F2':
+#             if strategy == 'even':
+#                 bet_amount = even_bet_base
+#             elif strategy == 'p_balanced':
+#                 bet_amount = p_balanced_bet_base * bout['F2_P_Win']
+#             bet_return = bet_amount * bout['F2_P_Odds'] if bout['FO'] == 'Fighter_2' else 0
+#         else:
+#             bet_amount = np.nan
+#             bet_return = np.nan
+#
+#         if not math.isnan(bet_amount):
+#             total_bets += bet_amount
+#             total_return += bet_return
+#             bet_net = bet_return - bet_amount
+#             total_net = total_return - total_bets
+#             bout['Bet_Amount'] = bet_amount
+#             bout['Bet_Return'] = bet_return
+#             bout['Bet_Net_Return'] = bet_net
+#             bout['Total_Bet_Amount'] = total_bets
+#             bout['Total_Bet_Return'] = total_return
+#             bout['Total_Net_Return'] = total_net
+#         else:
+#             bout['Bet_Amount'] = bout['Bet_Return'] = bout['Bet_Net_Return'] = bout['Total_Bet_Amount'] = \
+#                 bout['Total_Bet_Return'] = bout['Total_Net_Return'] = np.nan
+#     return event_dict
+#
+#
+# def run_simulation(fm_bd_input, bank=100, bet_strategy='p_balanced', bank_strategy=0.75):
+#     """
+#
+#     :param fm_bd_input: bout data to run simulation on. Must contain F*_W_Prob, Event_URL, F*_P_Odds
+#     :param bank: starting deposit
+#     :param bet_strategy: strategy selector for execute_strategy
+#     :param bank_strategy: how much of the bank is bet per event. This is to prevent wipe-outs from a single event.
+#     :return:
+#     """
+#     u_events = fm_bd_input[['Event_Date', 'T_Event_URL']].drop_duplicates().sort_values('Event_Date', ascending=True)
+#
+#     all_events = {}
+#     n = 0
+#     for idx, row in u_events.iterrows():
+#         event = row['T_Event_URL']
+#         event_dict = fm_bd_input[fm_bd_input['T_Event_URL'] == event].to_dict('index')
+#         event_bank = bank * bank_strategy
+#         start_bank = bank
+#         event_dict = execute_strategy(event_dict, event_bank, bet_strategy)
+#         # updating bank based on Event's Net
+#         net = 0
+#         for i, x in event_dict.items():
+#             if not math.isnan(x['Total_Net_Return']):
+#                 net = x['Total_Net_Return'] #the final Net for the event
+#         bank += net
+#
+#         for i, x in event_dict.items():
+#             x['Bank_Start'] = start_bank
+#             x['Bank_End'] = bank
+#             # compiling all events results in one dict
+#             all_events[n] = x
+#             n += 1
+#
+#     fm_bd_sim_results = pd.DataFrame(all_events).transpose()
+#
+#     return fm_bd_sim_results
+#
+# df = df_prob
+#
+# # adding columns to execute strategy
+# df = add_win_probs(df) # should be replaced with model outputs
+#
+# df = add_probable_odds(df) # TODO: needs to be more nuanced
+#
+# df['Bet_On'] = df.apply(get_bet_on, axis=1, args=(0.7,)) # cutoff argument can be flexible
+#
+# df_test = df
+#
+# # df_test = df[df['Event_Date'] > '2018'].dropna(subset=['F1_Open']).sort_values('Event_Date', ascending=False) # testing on 2018's data
+# df_test = run_simulation(df_test)
+# df_test['Bank_End'].tail()
+#
+# print(df_test['Bank_End'].head())
+# #TODO: strategy results for different p_score cutoffs
+# #TODO: results aggregate stats (# events, # bets, win/loss ratio, etc)
+# #TODO: plots
+#

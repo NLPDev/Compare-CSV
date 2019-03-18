@@ -330,10 +330,6 @@ top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(
                                                                X_test, y_test)
 
 top_pos = top_10_concat_features.index.values
-# print(top_10_concat_features)
-
-# plot_importances(top_10_concat_features)
-
 X_train_pos = X_train[top_pos]
 X_test_pos = X_test[top_pos]
 

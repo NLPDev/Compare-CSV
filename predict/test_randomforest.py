@@ -1,25 +1,10 @@
 import numpy as np
-import scipy as sp
 import pandas as pd
-import collections
-import re
-
-
-from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.ensemble import RandomForestClassifier
-from sklearn import neighbors
-from sklearn.metrics import mean_squared_error
-
-from math import sqrt
 import math
-
-from sklearn import preprocessing
-
 import matplotlib
-import matplotlib.pyplot as plt
 import seaborn as sns
 
 matplotlib.style.use('ggplot')
@@ -237,11 +222,9 @@ cols = ((['B_F1_Bool_Result'],'direct'),
 
 def pre_get_data(df):
     df_len = len(df.iloc[0, :]) - 1
-
     select_cols = []
 
     for i in range(df_len):
-
         if type(df.iloc[0, i + 1]) is np.float64:
             if math.isnan(df.iloc[0, i + 1]) == False:
                 select_cols.append(i + 1)
@@ -264,8 +247,6 @@ def pre_get_data(df):
                 cc = aa.replace("F1", "F12")
                 df[cc] = df[aa] / df[bb]
                 list_res.append(cc)
-
-
         elif "F2" not in item:
             list_res.append(item)
 
@@ -287,11 +268,9 @@ def pre_get_data(df):
 
 def add_weight(df, source):
     bw = source['B_WClass']
-
     add_list = []
 
     for item in bw:
-
         if item != item:
             add_list.append(np.nan)
             continue
@@ -305,23 +284,16 @@ fm_bd_all=pd.read_csv('fights_all.csv')
 
 fm_bd_model = fm_bd_all.copy()
 fm_bd_model = pre_get_data(fm_bd_model)
-# fm_bd_model = get_columns(fm_bd_model, cols)
-# fm_bd_model = pre_get_data(fm_bd_model)
-# add_weight(fm_bd_model, fm_bd_all)
-
 fm_bd_model = fm_bd_model.dropna()
 fm_bd_model=fm_bd_model[~fm_bd_model.isin([np.inf, -np.inf]).any(1)]
 
 
-
 X_train, X_test, y_train, y_test = get_train_test_split(fm_bd_model)
-
 X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizing
 
 rmse_val = []
 
-from rfpimp import importances, plot_importances
-import scikitplot as skplt
+from rfpimp import importances
 
 def get_feature_imp(model,X_train, y_train, X_test, y_test, return_n_top_fetures = 10):
 
