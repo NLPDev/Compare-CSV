@@ -384,10 +384,10 @@ def pprint_results(results, Y_test):
 results = dict()
 xgb_model(X_train, y_train, X_test, y_test, results)
 
-pprint_results(results, y_test)
+# pprint_results(results, y_test)
 
-plt.show()
-def draw_learning_curve(model, X, Y, model_name, train_sizes=[500, 1000, 1500, 1852]):
+# plt.show()
+def draw_learning_curve(model, X, Y, model_name, train_sizes=[500, 1000, 1500]):
     train_sizes, train_scores, test_scores = learning_curve(model, X, Y, cv=5, train_sizes=train_sizes)
     train_scores_mean = np.mean(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
@@ -401,9 +401,9 @@ def draw_learning_curve(model, X, Y, model_name, train_sizes=[500, 1000, 1500, 1
     plt.title(f"{model_name} Learning Curve")
     plt.show()
 
+draw_learning_curve(XGBClassifier(), fm_bd_model.drop(['B_F1_Bool_Result', 'Event_Date'], axis=1), fm_bd_model['B_F1_Bool_Result'], 'XGB')
 
-# draw_learning_curve(XGBClassifier(), X)
-#
+
 # #Test Model
 # pos = []
 # pos.append('FO')
