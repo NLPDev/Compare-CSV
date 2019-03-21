@@ -1,11 +1,18 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import accuracy_score
+from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import learning_curve
 from sklearn.ensemble import RandomForestClassifier
 import math
 import matplotlib
+
+#Visualization
 import seaborn as sns
+import matplotlib.pyplot as plt
+import itertools
+import scikitplot as skplt
+
 
 matplotlib.style.use('ggplot')
 
@@ -315,6 +322,60 @@ rfc = RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = 
 rfc.fit(X_train_pos, y_train)
 pred = rfc.predict(X_test_pos)
 # print(accuracy_score(y_test, pred))
+
+
+
+def rfc_model(X_train, y_train, X_test, y_test, results):
+    rfc = RandomForestClassifier(max_features="sqrt", n_estimators=700, max_depth=None, n_jobs=-1)
+    rfc.fit(X_train, y_train)
+    Y_pred = rfc.predict(X_test)
+    results['RFC'] = {}
+    results['RFC']['Accuracy'] = accuracy_score(y_test, Y_pred)
+    results['RFC']['cm'] = confusion_matrix(y_test, Y_pred)
+    results['RFC']['f1_macro'] = f1_score(y_test, Y_pred, average='macro')
+    results['RFC']['f1_class'] = f1_score(y_test, Y_pred, average=None)
+    results['RFC']['pred_prob'] = rfc.predict_proba(X_test)
+
+
+def plot_cm(cm, title):
+    plt.figure()
+    labels = ['Blue', 'Draw', 'No Contest', 'Red']
+    plt.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
+    plt.title(title)
+    plt.colorbar()
+    tick_marks = np.arange(len(labels))
+    plt.xticks(tick_marks, labels, rotation=45)
+    plt.yticks(tick_marks, labels)
+
+    fmt = 'd'
+    thresh = cm.max() / 2.
+
+    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+        plt.text(j, i, format(cm[i, j], fmt),
+                 horizontalalignment="center",
+                 color="white" if cm[i, j] > thresh else "black")
+    plt.xlabel('Predicted')
+    plt.ylabel('True')
+    plt.tight_layout()
+    # plt.show()
+
+
+def pprint_results(results, Y_test):
+    for model in results.keys():
+        print(f"==========RESULTS FOR {model}============")
+        print(f"Accuracy of {model} = {results[model]['Accuracy']}")
+        print(f"F1 Macro of {model} = {results[model]['f1_macro']}")
+        print(f"F1 Each class of {model} = {results[model]['f1_class']}")
+        plot_cm(results[model]['cm'], f"{model} CM")
+        skplt.metrics.plot_roc(Y_test, results[model]['pred_prob'], title=f"{model} ROC curve")
+
+results = dict()
+rfc_model(X_train, y_train, X_test, y_test, results)
+
+pprint_results(results, y_test)
+
+plt.show()
+
 
 
 
