@@ -313,8 +313,14 @@ dropdata=fm_bd_model
 
 top_10_concat_features, all_f_imp_concat = get_feature_imp(RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1), X_train, y_train, X_test, y_test)
 top_pos = top_10_concat_features.index.values
-# print(top_10_concat_features)
-
+add_pos = ['F12_Height', 'F12_Age', 'F12_Open', 'F12_Close_Best']
+for item in add_pos:
+    if item not in top_pos:
+        top_pos = np.append(top_pos, item)
+# print(list(fm_bd_model))
+# print(type(top_pos))
+# print(top_pos)
+# exit()
 X_train_pos = X_train[top_pos]
 X_test_pos = X_test[top_pos]
 #
