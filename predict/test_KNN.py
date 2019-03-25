@@ -1,9 +1,9 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
-from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import learning_curve
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.preprocessing import MinMaxScaler
 from rfpimp import plot_importances
 
 import math
@@ -246,15 +246,15 @@ def pre_get_data(df):
 
     list_pop = list(res_df)
     list_res = ['B_F1_Bool_Result', 'Event_Date', 'B_WClass']
-
     list_pop.pop()
+
     for item in list_pop:
         if "F1" in item:
             aa = item
             bb = aa.replace("F1", "F2")
             if bb in list_pop:
                 cc = aa.replace("F1", "F12")
-                df[cc] = df[aa] / df[bb]
+                df[cc] = df[aa] - df[bb]
                 list_res.append(cc)
         elif "F2" not in item:
             list_res.append(item)
@@ -296,7 +296,6 @@ fm_bd_model = pre_get_data(fm_bd_model)
 fm_bd_model = fm_bd_model.dropna()
 fm_bd_model=fm_bd_model[~fm_bd_model.isin([np.inf, -np.inf]).any(1)]
 
-
 X_train, X_test, y_train, y_test = get_train_test_split(fm_bd_model)
 X_train_scaled, X_test_scaled, scaler = get_scaled (X_train, X_test) #Normalizing
 
@@ -313,11 +312,14 @@ def get_feature_imp(model, X_train, y_train, X_test, y_test, return_n_top_feture
 
 dropdata=fm_bd_model
 
-top_10_concat_features, all_f_imp_concat = get_feature_imp(RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1), X_train, y_train, X_test, y_test)
-
+K = 13
+top_10_concat_features, all_f_imp_concat = get_feature_imp(KNeighborsClassifier(n_neighbors=K), X_train, y_train, X_test, y_test)
 plot_importances(top_10_concat_features)
-
 top_pos = top_10_concat_features.index.values
+
+"""
+Add some item to get more accuracy
+"""
 add_pos = ['F12_Height', 'F12_Age', 'F12_Open', 'F12_Close_Best']
 for item in add_pos:
     if item not in top_pos:
@@ -325,24 +327,23 @@ for item in add_pos:
 
 X_train_pos = X_train[top_pos]
 X_test_pos = X_test[top_pos]
-#
-rfc = RandomForestClassifier(max_features="sqrt",n_estimators = 700,max_depth = None,n_jobs=-1)
-rfc.fit(X_train_pos, y_train)
-pred = rfc.predict(X_test_pos)
+
+knn = KNeighborsClassifier(n_neighbors=K)
+knn.fit(X_train_pos, y_train)
+pred = knn.predict(X_test_pos)
+pred_proba = knn.predict_proba(X_test_pos)
 
 
-
-
-def rfc_model(X_train, y_train, X_test, y_test, results):
-    rfc = RandomForestClassifier(max_features="sqrt", n_estimators=700, max_depth=None, n_jobs=-1)
-    rfc.fit(X_train, y_train)
-    Y_pred = rfc.predict(X_test)
-    results['RFC'] = {}
-    results['RFC']['Accuracy'] = accuracy_score(y_test, Y_pred)
-    results['RFC']['cm'] = confusion_matrix(y_test, Y_pred)
-    results['RFC']['f1_macro'] = f1_score(y_test, Y_pred, average='macro')
-    results['RFC']['f1_class'] = f1_score(y_test, Y_pred, average=None)
-    results['RFC']['pred_prob'] = rfc.predict_proba(X_test)
+def knn_model(X_train, y_train, X_test, y_test, results):
+    knn = KNeighborsClassifier(n_neighbors=K)
+    knn.fit(X_train, y_train)
+    Y_pred = knn.predict(X_test)
+    results['KNN'] = {}
+    results['KNN']['Accuracy'] = accuracy_score(y_test, Y_pred)
+    results['KNN']['cm'] = confusion_matrix(y_test, Y_pred)
+    results['KNN']['f1_macro'] = f1_score(y_test, Y_pred, average='macro')
+    results['KNN']['f1_class'] = f1_score(y_test, Y_pred, average=None)
+    results['KNN']['pred_prob'] = knn.predict_proba(X_test)
 
 
 def plot_cm(cm, title):
@@ -378,22 +379,28 @@ def pprint_results(results, Y_test):
         skplt.metrics.plot_roc(Y_test, results[model]['pred_prob'], title=f"{model} ROC curve")
 
 results = dict()
-rfc_model(X_train_pos, y_train, X_test_pos, y_test, results)
+knn_model(X_train_pos, y_train, X_test_pos, y_test, results)
 
 pprint_results(results, y_test)
 
 plt.show()
 
 
+def draw_learning_curve(model, X, Y, model_name, train_sizes=[500, 1000, 1500]):
+    train_sizes, train_scores, test_scores = learning_curve(model, X, Y, cv=5, train_sizes=train_sizes)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
 
+    plt.grid()
+    plt.xlabel("Training_examples")
+    plt.ylabel("Scores")
+    plt.plot(train_sizes, train_scores_mean, label="Training_scores")
+    plt.plot(train_sizes, test_scores_mean, label="Test Scores")
+    plt.legend(loc="best")
+    plt.title(f"{model_name} Learning Curve")
+    plt.show()
 
-X_train_pos = X_train[top_pos]
-X_test_pos = X_test[top_pos]
-
-
-prob = accuracy_score(y_test, pred)
-pred_proba = rfc.predict_proba(X_test_pos)
-
+draw_learning_curve(KNeighborsClassifier(n_neighbors=K), fm_bd_model.drop(['B_F1_Bool_Result', 'Event_Date'], axis=1), fm_bd_model['B_F1_Bool_Result'], 'KNN')
 
 pos = []
 pos.append('FO')

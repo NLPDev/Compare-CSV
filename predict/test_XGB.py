@@ -5,6 +5,7 @@ from xgboost import XGBClassifier
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.model_selection import learning_curve
+
 import math
 
 #Visualization
@@ -12,6 +13,8 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 import itertools
 import scikitplot as skplt
+from rfpimp import plot_importances
+
 
 get_weight = {
     "BW":61.2,
@@ -225,11 +228,9 @@ cols = ((['B_F1_Bool_Result'],'direct'),
 
 def pre_get_data(df):
     df_len = len(df.iloc[0, :]) - 1
-
     select_cols = []
 
     for i in range(df_len):
-
         if type(df.iloc[0, i + 1]) is np.float64:
             if math.isnan(df.iloc[0, i + 1]) == False:
                 select_cols.append(i + 1)
@@ -252,10 +253,8 @@ def pre_get_data(df):
                 cc = aa.replace("F1", "F12")
                 df[cc] = df[aa] - df[bb]
                 list_res.append(cc)
-
         elif "F2" not in item:
             list_res.append(item)
-
 
 
     bw = df['B_WClass']
@@ -315,7 +314,7 @@ dropdata=fm_bd_model
 
 top_10_concat_features, all_f_imp_concat = get_feature_imp(XGBClassifier(), X_train, y_train,
                                                                X_test, y_test)
-
+plot_importances(top_10_concat_features)
 top_pos = top_10_concat_features.index.values
 
 X_train_pos = X_train[top_pos]
@@ -326,7 +325,7 @@ xgb.fit(X_train_pos, y_train)
 pred = xgb.predict(X_test_pos)
 pred_proba = xgb.predict_proba(X_test_pos)
 
-# print(accuracy_score(y_test, pred))
+
 
 """
 Visualization
@@ -382,7 +381,7 @@ def pprint_results(results, Y_test):
 
 
 results = dict()
-xgb_model(X_train, y_train, X_test, y_test, results)
+xgb_model(X_train_pos, y_train, X_test_pos, y_test, results)
 
 pprint_results(results, y_test)
 
