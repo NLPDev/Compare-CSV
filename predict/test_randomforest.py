@@ -254,7 +254,7 @@ def pre_get_data(df):
             bb = aa.replace("F1", "F2")
             if bb in list_pop:
                 cc = aa.replace("F1", "F12")
-                df[cc] = df[aa] / df[bb]
+                df[cc] = df[aa] - df[bb]
                 list_res.append(cc)
         elif "F2" not in item:
             list_res.append(item)
@@ -384,6 +384,22 @@ pprint_results(results, y_test)
 
 plt.show()
 
+
+def draw_learning_curve(model, X, Y, model_name, train_sizes=[500, 1000, 1500]):
+    train_sizes, train_scores, test_scores = learning_curve(model, X, Y, cv=5, train_sizes=train_sizes)
+    train_scores_mean = np.mean(train_scores, axis=1)
+    test_scores_mean = np.mean(test_scores, axis=1)
+
+    plt.grid()
+    plt.xlabel("Training_examples")
+    plt.ylabel("Scores")
+    plt.plot(train_sizes, train_scores_mean, label="Training_scores")
+    plt.plot(train_sizes, test_scores_mean, label="Test Scores")
+    plt.legend(loc="best")
+    plt.title(f"{model_name} Learning Curve")
+    plt.show()
+
+draw_learning_curve(RandomForestClassifier(max_features="sqrt", n_estimators=700, max_depth=None, n_jobs=-1), fm_bd_model.drop(['B_F1_Bool_Result', 'Event_Date'], axis=1), fm_bd_model['B_F1_Bool_Result'], 'MLP')
 
 
 
