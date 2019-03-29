@@ -52,7 +52,6 @@ def get_train_test_split(df, test_params=('date_cutoff', '2018'), drop_nan=True,
     if drop_nan:
         df = df.dropna()
 
-    # print(df)
 
     # Create train and test splits
     if test_params[0] == 'pct_last_rows':
@@ -69,19 +68,15 @@ def get_train_test_split(df, test_params=('date_cutoff', '2018'), drop_nan=True,
     X_train, y_train = df_train.iloc[:, 1:], df_train.iloc[:, 0]
     X_test, y_test = df_test.iloc[:, 1:], df_test.iloc[:, 0]
 
-    # print(y_test.iloc[0])
-
     return X_train, X_test, y_train, y_test
 
 
 def get_scaled(X_train, X_test):
     scaler = MinMaxScaler(feature_range=(-1, 1))
 
-    # scaler = preprocessing.StandardScaler()
 
     X_train_scaled = scaler.fit_transform(X_train)
 
-    # print(X_train_scaled)
     X_test_scaled = scaler.transform(X_test)
 
     return X_train_scaled, X_test_scaled, scaler
@@ -217,8 +212,6 @@ def get_columns (df_f1_f2, col_comb):
     output_cols = ['Event_Date']
     output_cols = d_cols + F1_F2_cols + F1mF2_cols + F1oF2_cols + pct_F1_cols + output_cols
 
-    # print(output_cols)
-
     return df[output_cols]
 
 #Sample
@@ -270,7 +263,6 @@ def pre_get_data(df):
             df.iloc[i, j] = np.nan
         else:
             df.iloc[i, j] = get_weight[item]
-            # print(type(df.iloc[i, j]))
 
     df['B_WClass'] = df['B_WClass'].astype(float)
     return df[list_res]
@@ -307,7 +299,7 @@ def get_feature_imp(model, X_train, y_train, X_test, y_test, return_n_top_feture
 
     model.fit(X_train,y_train)
     imp = importances(model, X_test, y_test)
-    # print(imp)
+
     return imp.head(n=return_n_top_fetures),imp
 
 dropdata=fm_bd_model
@@ -365,7 +357,6 @@ def plot_cm(cm, title):
     plt.xlabel('Predicted')
     plt.ylabel('True')
     plt.tight_layout()
-    # plt.show()
 
 
 def pprint_results(results, Y_test):
