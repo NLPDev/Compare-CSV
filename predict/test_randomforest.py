@@ -304,7 +304,7 @@ rmse_val = []
 
 from rfpimp import importances
 
-def get_feature_imp(model, X_train, y_train, X_test, y_test, return_n_top_fetures = 15):
+def get_feature_imp(model, X_train, y_train, X_test, y_test, return_n_top_fetures = 55):
 
     model.fit(X_train,y_train)
     imp = importances(model, X_test, y_test)
